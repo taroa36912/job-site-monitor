@@ -32,10 +32,10 @@ const config = {
   afterLoginWaitMs: Number(process.env.AFTER_LOGIN_WAIT_MS || 2000),
 
   // 監視対象。マイページトップの左メニューで、この文字列を含むリンクの予約画面を確認する（カンマ区切り）。
-  // 【本選考】を含むリンクがある場合だけ確認する（無ければ何もしない）。予約画面の構造は従来の2次選考（mypage/seminar.aspx）と同じと仮定。
+  // 本選考を含むリンクがある場合だけ確認する（無ければ何もしない）。予約画面の構造は従来の2次選考（mypage/seminar.aspx）と同じと仮定。
   // 以前の対象リンク名: 「【内定直結型インターンシップ選考】2次選考のご予約・確認はこちら」
   // 動作確認時は、現在予約受付中の別イベント名の一部（例: 企画書の作り方講座）を指定すると通知まで試せる。
-  targetMenuTexts: listEnv('TARGET_MENU_TEXTS', ['【本選考】']),
+  targetMenuTexts: listEnv('TARGET_MENU_TEXTS', ['本選考']),
 
   // 予約画面（mypage/seminar.aspx）の日程表は1ページに収まらないとページ送りになる。無限ループ防止の上限。
   maxPages: Number(process.env.MAX_PAGES || 20),
@@ -43,7 +43,7 @@ const config = {
   // 自動予約。対象の予約画面に空き枠が出たら、一番最後（開催日時が最も遅い）の日程を予約する。
   // 対象は AUTO_RESERVE_MENU_TEXTS を含む予約画面のみ（動作確認用に TARGET_MENU_TEXTS で別イベントを見ても、そちらは予約しない）。
   autoReserve: boolEnv('AUTO_RESERVE', true),
-  autoReserveMenuTexts: listEnv('AUTO_RESERVE_MENU_TEXTS', ['【本選考】']),
+  autoReserveMenuTexts: listEnv('AUTO_RESERVE_MENU_TEXTS', ['本選考']),
   // true: 予約確認画面（「この日程に予約しますか？」）まで進んで内容を確かめ、「予約する」は押さずに終える（動作確認用）
   autoReserveDryRun: boolEnv('AUTO_RESERVE_DRY_RUN', false),
   reservedStorePath: path.resolve(process.cwd(), 'data', 'reserved.json'),

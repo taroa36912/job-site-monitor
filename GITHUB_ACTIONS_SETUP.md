@@ -4,7 +4,7 @@
 
 ```text
 GitHub Actions（公開リポジトリ、1時間に1回・毎時7分）
-  ├ cyberagent-snar-checker   【本選考】の空き通知（メニューに【本選考】のリンクがあるときだけ動く）
+  ├ cyberagent-snar-checker   本選考の空き通知（メニューに本選考のリンクがあるときだけ動く）
   ├ simplex-iwebs-checker     人事面談の空き通知
   └ baycurrent-e2r-checker    東大・京大生限定選考会の空き通知
   （mizuho-axol-checker は対象外: GitHub Actions のサーバーからは AXOL のログイン画面が表示されないため。Mac でローカル実行）
