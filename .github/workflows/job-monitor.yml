@@ -48,11 +48,8 @@ jobs:
             pw_env: E2R_PASSWORD
             id_secret: BAYCURRENT_ID
             pw_secret: BAYCURRENT_PASSWORD
-          - dir: mizuho-axol-checker
-            id_env: AXOL_ID
-            pw_env: AXOL_PASSWORD
-            id_secret: MIZUHO_ID
-            pw_secret: MIZUHO_PASSWORD
+          # mizuho-axol-checker は GitHub Actions（海外のサーバー）からだと AXOL のログイン画面が表示されないため対象外。
+          # みずほを監視する場合は Mac でローカル実行する（mizuho-axol-checker/README.md）。
 
     name: ${{ matrix.dir }}
     defaults:

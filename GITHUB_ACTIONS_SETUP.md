@@ -6,8 +6,8 @@
 GitHub Actions（公開リポジトリ、15分ごと）
   ├ cyberagent-snar-checker   2次選考の空き通知＋自動予約
   ├ simplex-iwebs-checker     人事面談の空き通知＋自動予約
-  ├ baycurrent-e2r-checker    東大・京大生限定選考会の空き通知
-  └ mizuho-axol-checker       クオンツ・アクチュアリーの空き通知
+  └ baycurrent-e2r-checker    東大・京大生限定選考会の空き通知
+  （mizuho-axol-checker は対象外: GitHub Actions のサーバーからは AXOL のログイン画面が表示されないため。Mac でローカル実行）
        ↓ 各ジョブ: npm ci → Chromium 準備 → node src/check.js（コードは Mac 版と同じ）
        ↓ 通知済み・自動予約済みの記録（data/*.json）は Actions のキャッシュで次回へ引き継ぐ
   Slack（Incoming Webhook。フリープランのアプリ10個の枠のうち1つを使用）
@@ -72,7 +72,6 @@ git push -u origin main
 | `CYBERAGENT_ID` / `CYBERAGENT_PASSWORD` | サイバーエージェントのマイページ ID / パスワード |
 | `SIMPLEX_ID` / `SIMPLEX_PASSWORD` | シンプレクスのマイページ ID / パスワード |
 | `BAYCURRENT_ID` / `BAYCURRENT_PASSWORD` | ベイカレントのマイページ ID / パスワード |
-| `MIZUHO_ID` / `MIZUHO_PASSWORD` | みずほのマイページ ID / パスワード |
 
 - 各社の値は、Mac の各フォルダの `.env` に書いたものと同じです。
 - 監視が不要な会社は、Secrets を登録する代わりに `.github/workflows/job-monitor.yml` の `matrix.include` からその会社の5行を削除してください（Secrets が無いとそのジョブは失敗表示になります）。
@@ -97,7 +96,6 @@ git push -u origin main
 cd ~/"Documents/src/Job hunting"/confirm_system/cyberagent-snar-checker && ./scripts/uninstall-launchd.sh
 cd ../simplex-iwebs-checker && ./scripts/uninstall-launchd.sh
 cd ../baycurrent-e2r-checker && ./scripts/uninstall-launchd.sh
-cd ../mizuho-axol-checker && ./scripts/uninstall-launchd.sh
 ```
 
 （launchd に登録していないフォルダでは何も起きません。）
