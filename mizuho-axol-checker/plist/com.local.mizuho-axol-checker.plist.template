@@ -1,0 +1,2 @@
+このファイルはテンプレートです。
+通常は scripts/install-launchd.sh が環境に合わせて plist を自動生成します。

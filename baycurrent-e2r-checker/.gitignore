@@ -1,0 +1,6 @@
+.env
+node_modules/
+logs/*.png
+logs/*.html
+logs/*.log
+data/notified_slots.json

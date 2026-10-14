@@ -1,0 +1,19 @@
+{
+  "name": "mizuho-axol-checker",
+  "version": "1.0.0",
+  "description": "Mizuho Financial Group AXOL quants/actuary reservation availability checker for macOS",
+  "main": "src/check.js",
+  "scripts": {
+    "check": "node src/check.js",
+    "debug": "HEADLESS=false AUTO_SLEEP=false node src/check.js",
+    "inspect": "HEADLESS=false node src/inspect.js",
+    "install-browsers": "playwright install chromium"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "playwright": "^1.49.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

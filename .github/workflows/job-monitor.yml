@@ -1,0 +1,119 @@
+# 就活マイページの空き日程監視を GitHub Actions で定期実行し、Slack（Incoming Webhook）へ通知する。
+#
+# このファイルは「confirm_system/ の中身をルートに置いた公開リポジトリ」で動かす前提です
+# （Job-hunting リポジトリ本体には履歴書などの個人ファイルがあるため公開しない）。
+# 手動で行う設定は confirm_system/GITHUB_ACTIONS_SETUP.md を参照。
+name: job-monitor
+
+on:
+  schedule:
+    # 15分ごと（UTC。GitHub の混雑時は数分〜十数分遅れたり、まれに飛ばされることがある）
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      always_notify:
+        description: '予約可否に関係なく毎回 Slack に結果を送る（疎通確認用）'
+        type: boolean
+        default: false
+
+# 前回の実行が終わる前に次が始まらないようにする（通知済み記録の取り違え防止）
+concurrency:
+  group: job-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # dir: 監視ツールのフォルダ / id_env, pw_env: ツールが読む環境変数名 / id_secret, pw_secret: GitHub Secrets の名前
+          - dir: cyberagent-snar-checker
+            id_env: SNAR_ID
+            pw_env: SNAR_PASSWORD
+            id_secret: CYBERAGENT_ID
+            pw_secret: CYBERAGENT_PASSWORD
+          - dir: simplex-iwebs-checker
+            id_env: IWEBS_ID
+            pw_env: IWEBS_PASSWORD
+            id_secret: SIMPLEX_ID
+            pw_secret: SIMPLEX_PASSWORD
+          - dir: baycurrent-e2r-checker
+            id_env: E2R_ID
+            pw_env: E2R_PASSWORD
+            id_secret: BAYCURRENT_ID
+            pw_secret: BAYCURRENT_PASSWORD
+          - dir: mizuho-axol-checker
+            id_env: AXOL_ID
+            pw_env: AXOL_PASSWORD
+            id_secret: MIZUHO_ID
+            pw_secret: MIZUHO_PASSWORD
+
+    name: ${{ matrix.dir }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      HEADLESS: 'true'
+      AUTO_SLEEP: 'false'
+      # 公開リポジトリでは実行ログが誰でも見られるため、画面の HTML/スクリーンショットは保存しない
+      SAVE_DEBUG: 'false'
+      ALWAYS_NOTIFY_DISCORD: ${{ inputs.always_notify && 'true' || 'false' }}
+      # 自動予約（cyberagent / simplex のみが使う）。リポジトリの Variables で AUTO_RESERVE=false にすると止まる
+      AUTO_RESERVE: ${{ vars.AUTO_RESERVE || 'true' }}
+      TZ: Asia/Tokyo
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.dir }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Load credentials
+        # matrix ごとに必要な Secrets だけを、ツールが読む環境変数名で渡す（値はログ上で自動的に伏せ字になる）
+        env:
+          LOGIN_ID: ${{ secrets[matrix.id_secret] }}
+          LOGIN_PASSWORD: ${{ secrets[matrix.pw_secret] }}
+        run: |
+          if [ -z "$LOGIN_ID" ] || [ -z "$LOGIN_PASSWORD" ]; then
+            echo "::error::Secrets ${{ matrix.id_secret }} / ${{ matrix.pw_secret }} が未設定です"
+            exit 1
+          fi
+          {
+            echo "${{ matrix.id_env }}=$LOGIN_ID"
+            echo "${{ matrix.pw_env }}=$LOGIN_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      # 通知済み・自動予約済みの記録（data/*.json）を実行をまたいで引き継ぐ
+      - name: Restore state
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ matrix.dir }}/data
+          key: state-${{ matrix.dir }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: state-${{ matrix.dir }}-
+
+      - name: Check
+        run: node src/check.js
+
+      - name: Save state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ matrix.dir }}/data
+          key: state-${{ matrix.dir }}-${{ github.run_id }}-${{ github.run_attempt }}

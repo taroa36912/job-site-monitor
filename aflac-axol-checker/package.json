@@ -1,0 +1,15 @@
+{
+  "name": "aflac-axol-checker",
+  "version": "1.0.0",
+  "description": "Aflac Summer 1day internship reservation slot checker for macOS",
+  "main": "src/check.js",
+  "scripts": {
+    "check": "node src/check.js",
+    "debug": "HEADLESS=false AUTO_SLEEP=false node src/check.js",
+    "install-browsers": "playwright install chromium"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "playwright": "^1.49.1"
+  }
+}

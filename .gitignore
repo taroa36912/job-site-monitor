@@ -1,0 +1,8 @@
+# 公開リポジトリ（confirm_system/ をルートにしたもの）用。各ツール共通で、秘密情報・実行時データを含めない
+.env
+.env.*
+!.env.example
+node_modules/
+logs/
+data/*.json
+.DS_Store
