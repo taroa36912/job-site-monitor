@@ -1,20 +1,21 @@
-# GitHub Actions で常時監視し Slack に通知する（PC 常時起動なし）
+# GitHub Actions で常時監視し Discord に通知する（PC 常時起動なし）
 
 ## 仕組み
 
 ```text
-GitHub Actions（公開リポジトリ、15分ごと）
-  ├ cyberagent-snar-checker   2次選考の空き通知＋自動予約
-  ├ simplex-iwebs-checker     人事面談の空き通知＋自動予約
+GitHub Actions（公開リポジトリ、1時間に1回・毎時7分）
+  ├ cyberagent-snar-checker   【本選考】の空き通知（メニューに【本選考】のリンクがあるときだけ動く）
+  ├ simplex-iwebs-checker     人事面談の空き通知
   └ baycurrent-e2r-checker    東大・京大生限定選考会の空き通知
   （mizuho-axol-checker は対象外: GitHub Actions のサーバーからは AXOL のログイン画面が表示されないため。Mac でローカル実行）
        ↓ 各ジョブ: npm ci → Chromium 準備 → node src/check.js（コードは Mac 版と同じ）
        ↓ 通知済み・自動予約済みの記録（data/*.json）は Actions のキャッシュで次回へ引き継ぐ
-  Slack（Incoming Webhook。フリープランのアプリ10個の枠のうち1つを使用）
+  Discord（Webhook）
 ```
 
 - ワークフロー: `.github/workflows/job-monitor.yml`
-- 通知先は `SLACK_WEBHOOK_URL`。Mac で使う場合は今までどおり `DISCORD_WEBHOOK_URL` も使え、両方設定すれば両方へ送ります。
+- 通知先は `DISCORD_WEBHOOK_URL`（Mac で使っているものと同じ Webhook で可）。コードは Slack（`SLACK_WEBHOOK_URL`）にも対応していますが、現在のワークフローでは使っていません。
+- 自動予約は停止しています（ワークフローで `AUTO_RESERVE: 'false'` を固定）。空き日程の通知だけを行います。
 - Mac 専用のスリープ処理（`pmset`）は、Mac 以外では何もしません。
 - 公開リポジトリでは実行ログを誰でも見られるため、画面の HTML/スクリーンショットは保存しません（`SAVE_DEBUG=false`）。ID・パスワード・Webhook URL はログ上で自動的に伏せ字になります。
 
@@ -25,13 +26,11 @@ GitHub Actions（公開リポジトリ、15分ごと）
 
 ## 手動で行う作業
 
-### 1. Slack: Incoming Webhook の URL を作る
+### 1. Discord: Webhook の URL を用意する
 
-1. https://api.slack.com/apps を開き **Create New App** → **From scratch**
-2. App Name（例: `job-monitor`）と通知先のワークスペースを選んで作成
-3. 左メニュー **Incoming Webhooks** → **Activate Incoming Webhooks** を On
-4. 画面下の **Add New Webhook to Workspace** → 通知先チャンネルを選んで **許可する**
-5. 表示された `https://hooks.slack.com/services/...` をコピー（手順 4 の Secrets に登録。他人に見せない）
+Mac の各 `.env` に書いている `DISCORD_WEBHOOK_URL` をそのまま使えます。新しく作る場合は、
+Discord のチャンネル設定 → **連携サービス** → **ウェブフック** → **新しいウェブフック** → **ウェブフックURLをコピー**。
+（手順 4 の Secrets に登録。他人に見せない）
 
 ### 2. このブランチを Job-hunting の main にマージ
 
@@ -68,7 +67,7 @@ git push -u origin main
 
 | Name | 値 |
 | --- | --- |
-| `SLACK_WEBHOOK_URL` | 手順 1 の URL |
+| `DISCORD_WEBHOOK_URL` | 手順 1 の URL |
 | `CYBERAGENT_ID` / `CYBERAGENT_PASSWORD` | サイバーエージェントのマイページ ID / パスワード |
 | `SIMPLEX_ID` / `SIMPLEX_PASSWORD` | シンプレクスのマイページ ID / パスワード |
 | `BAYCURRENT_ID` / `BAYCURRENT_PASSWORD` | ベイカレントのマイページ ID / パスワード |
@@ -76,17 +75,17 @@ git push -u origin main
 - 各社の値は、Mac の各フォルダの `.env` に書いたものと同じです。
 - 監視が不要な会社は、Secrets を登録する代わりに `.github/workflows/job-monitor.yml` の `matrix.include` からその会社の5行を削除してください（Secrets が無いとそのジョブは失敗表示になります）。
 
-### 5.（任意）自動予約を止める
+### 5. 自動予約について
 
-**Settings → Secrets and variables → Actions → Variables → New repository variable** で `AUTO_RESERVE` = `false`。
-未設定なら今までどおり、サイバーエージェントとシンプレクスで自動予約が有効です。
+自動予約は停止しています（`.github/workflows/job-monitor.yml` の `AUTO_RESERVE: 'false'`）。
+再開する場合はこの値を `'true'` に変更してコミットしてください（サイバーエージェントとシンプレクスが対象）。
 
 ### 6. 初回の動作確認
 
 1. リポジトリの **Actions** タブを開く（無効になっていたら有効化）
 2. 左の **job-monitor** → **Run workflow** → **always_notify** にチェック → **Run workflow**
-3. 4社分のジョブが緑になり、Slack に `[DEBUG] … 実行通知` が届けば成功
-4. 以後は15分ごとに自動実行されます（通常の通知は新しい空きが出たときだけ）
+3. 3社分のジョブが緑になり、Discord に `[DEBUG] … 実行通知` が届けば成功
+4. 以後は1時間に1回（毎時7分ごろ）自動実行されます（通常の通知は新しい空きが出たときだけ）
 
 ### 7. Mac の自動実行を止める（二重通知・二重予約の防止）
 
@@ -105,7 +104,7 @@ cd ../baycurrent-e2r-checker && ./scripts/uninstall-launchd.sh
 ## 運用上の注意
 
 - **60日ルール:** 公開リポジトリで60日間コミットが無いと、GitHub が定期実行を自動で止めます。止まったら Actions タブから再度有効化してください（メールで通知されます）。
-- **遅延:** 15分ごとの指定でも、GitHub の混雑時は数分〜十数分遅れたり、まれに1回分飛ばされたりします。
+- **遅延:** 毎時7分の指定でも、GitHub の混雑時は数分〜十数分遅れたり、まれに1回分飛ばされたりします。
 - **コードの更新:** Job-hunting 側で `confirm_system/` を直したら、公開リポジトリにも同じ変更を反映してください（手順 3 と同様にファイルを取り出し直してコミット）。
 - **ログの公開範囲:** Actions のログ（空き日程・処理の流れ）は誰でも閲覧できます。ID・パスワード・Webhook URL は伏せ字になります。
 - **規約:** アクセス元が GitHub のサーバーになる点を含め、各社マイページの規約（例: シンプレクス会員規約 第5条3項・第7条）との関係は、Mac で動かしていたときと同様に自己判断になります。

@@ -1,4 +1,4 @@
-# 就活マイページの空き日程監視を GitHub Actions で定期実行し、Slack（Incoming Webhook）へ通知する。
+# 就活マイページの空き日程監視を GitHub Actions で定期実行し、Discord（Webhook）へ通知する。
 #
 # このファイルは「confirm_system/ の中身をルートに置いた公開リポジトリ」で動かす前提です
 # （Job-hunting リポジトリ本体には履歴書などの個人ファイルがあるため公開しない）。
@@ -7,12 +7,12 @@ name: job-monitor
 
 on:
   schedule:
-    # 15分ごと（UTC。GitHub の混雑時は数分〜十数分遅れたり、まれに飛ばされることがある）
-    - cron: '*/15 * * * *'
+    # 1時間に1回（毎時7分。混雑しやすい毎時0分を避けている。GitHub の混雑時は数分〜十数分遅れたり、まれに飛ばされることがある）
+    - cron: '7 * * * *'
   workflow_dispatch:
     inputs:
       always_notify:
-        description: '予約可否に関係なく毎回 Slack に結果を送る（疎通確認用）'
+        description: '予約可否に関係なく毎回 Discord に結果を送る（疎通確認用）'
         type: boolean
         default: false
 
@@ -57,14 +57,14 @@ jobs:
         working-directory: ${{ matrix.dir }}
 
     env:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
       HEADLESS: 'true'
       AUTO_SLEEP: 'false'
       # 公開リポジトリでは実行ログが誰でも見られるため、画面の HTML/スクリーンショットは保存しない
       SAVE_DEBUG: 'false'
       ALWAYS_NOTIFY_DISCORD: ${{ inputs.always_notify && 'true' || 'false' }}
-      # 自動予約（cyberagent / simplex のみが使う）。リポジトリの Variables で AUTO_RESERVE=false にすると止まる
-      AUTO_RESERVE: ${{ vars.AUTO_RESERVE || 'true' }}
+      # 自動予約は停止中（cyberagent / simplex は空きを通知するだけ）。再開する場合は 'true' にする
+      AUTO_RESERVE: 'false'
       TZ: Asia/Tokyo
 
     steps:
