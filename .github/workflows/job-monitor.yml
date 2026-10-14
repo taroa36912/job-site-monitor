@@ -3,6 +3,7 @@
 # このファイルは「confirm_system/ の中身をルートに置いた公開リポジトリ」で動かす前提です
 # （Job-hunting リポジトリ本体には履歴書などの個人ファイルがあるため公開しない）。
 # 手動で行う設定は confirm_system/GITHUB_ACTIONS_SETUP.md を参照。
+
 name: job-monitor
 
 on:
