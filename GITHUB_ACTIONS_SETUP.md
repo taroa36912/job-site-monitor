@@ -1,5 +1,8 @@
 # GitHub Actions で常時監視し Discord に通知する（PC 常時起動なし）
 
+> **現在、GitHub Actions の定期実行は停止しています。** Windows のタスク スケジューラで15分ごとに実行する構成に移行しました（`LOCAL_SETUP_WINDOWS.md`）。
+> ワークフローは手動実行（Run workflow）のみ可能です。定期実行を再開する場合は `.github/workflows/job-monitor.yml` の `schedule` のコメントを戻してください。
+
 ## 仕組み
 
 ```text
